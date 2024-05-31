@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const speedOffset = 0.00005;
+const speedOffset = 0.0001;
 let time = 0;
 
 const STATUS = {
@@ -17,17 +17,15 @@ self.onmessage = function (e) {
   const points = [];
   let svgPath = "";
   let pathLength = 0;
+  let firstPoint = null;
+  let lastPoint = null;
   if (
     Array.isArray(lengthRatios) &&
     Array.isArray(omegaRatios) &&
     lengthRatios.length === omegaRatios.length &&
     lengthRatios.length > 0
   ) {
-    while (
-      points.length < 50 ||
-      points.at(0).x.toFixed(0) !== points.at(points.length - 1).x.toFixed(0) ||
-      points.at(0).y.toFixed(0) !== points.at(points.length - 1).y.toFixed(0)
-    ) {
+    do {
       const cords = getPendulumLastPointPosition(
         lengthRatios,
         omegaRatios,
@@ -48,23 +46,34 @@ self.onmessage = function (e) {
         pathLength += speed * dt;
       }
 
-      points.push({
+      const point = {
         ...cords,
         dx: dx,
         dy: dy,
         dt: dt,
         speed: speed,
         pathLength: pathLength,
-      });
-      if (points.length === 1) {
-        svgPath += `M${cords.x} ${cords.y} `;
+      };
+      if (points.length === 0) {
+        firstPoint = point;
+        svgPath += `M${point.x} ${point.y} `;
       } else {
-        svgPath += `L${cords.x} ${cords.y} `;
+        lastPoint = point;
+        svgPath += `L${point.x} ${point.y} `;
       }
+      points.push(point);
       time++;
-    }
-    const lastPoint = points.at(-1);
-    points[0].speed = lastPoint.speed;
+    } while (
+      points.length < 1000 ||
+      Math.floor(firstPoint.x) !== Math.floor(lastPoint.x) ||
+      Math.floor(firstPoint.y) !== Math.floor(lastPoint.y)
+    );
+    firstPoint = points[0];
+    lastPoint = points.at(-1);
+    firstPoint.speed = lastPoint.speed;
+    lastPoint.pendulums = firstPoint.pendulums;
+    lastPoint.x = firstPoint.x;
+    lastPoint.y = firstPoint.y;
 
     self.postMessage(getWorkerResponse(STATUS.success, points, svgPath));
   } else {
