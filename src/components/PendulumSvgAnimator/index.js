@@ -1,7 +1,7 @@
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { Button, ButtonGroup } from "@mui/material";
+import { Button, ButtonGroup, Paper, Slider } from "@mui/material";
 import Loader from "components/Loader";
 import usePendulum from "hooks/usePendulum";
 import { STAR_RATIOS } from "presets";
@@ -27,11 +27,13 @@ export const STATUS = {
 };
 const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
   const svgRef = useRef(null);
+  const progressSliderRef = useRef(null);
   const directionRef = useRef("forward");
   const durationRef = useRef(DURATION);
   const startTimeRef = useRef(null);
   const progressPercentRef = useRef(0);
   const requestIdRef = useRef(null);
+  const [sliderValue, setSliderValue] = useState(0);
   const [status, setStatus] = useState(STATUS.idle);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const { points, svgPath, isLoading } = usePendulum(
@@ -49,6 +51,25 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
       y: rect.height / 2,
     });
   }, []);
+
+  const draw = (path, lines, dir, progressPercent) => {
+    const effectiveProgressPercent =
+      dir === "backward" ? 1 - progressPercent : progressPercent;
+
+    const effectiveTime = inOutQuad(effectiveProgressPercent);
+
+    const index = Math.floor((points.length - 1) * effectiveTime);
+
+    const point = points[index];
+    path.style.strokeDashoffset = lastPoint.pathLength - point.pathLength;
+    lines.forEach((line, index) => {
+      const pendulum = point.pendulums[index];
+      line.setAttribute("x1", pendulum.x1);
+      line.setAttribute("y1", pendulum.y1);
+      line.setAttribute("x2", pendulum.x2);
+      line.setAttribute("y2", pendulum.y2);
+    });
+  };
 
   const startAnimation = (
     onComplete = () => {
@@ -72,26 +93,8 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
         Math.min((time - startTimeRef.current) / durationRef.current, 1)
       );
       progressPercentRef.current = _progressPercent;
-
-      const effectiveProgressPercent =
-        directionRef.current === "backward"
-          ? 1 - _progressPercent
-          : _progressPercent;
-
-      const effectiveTime = inOutQuad(effectiveProgressPercent);
-
-      const index = Math.floor((points.length - 1) * effectiveTime);
-
-      const point = points[index];
-      path.style.strokeDashoffset = lastPoint.pathLength - point.pathLength;
-      lines.forEach((line, index) => {
-        const pendulum = point.pendulums[index];
-        line.setAttribute("x1", pendulum.x1);
-        line.setAttribute("y1", pendulum.y1);
-        line.setAttribute("x2", pendulum.x2);
-        line.setAttribute("y2", pendulum.y2);
-      });
-
+      setSliderValue(Number(_progressPercent).toFixed(5));
+      draw(path, lines, directionRef.current, _progressPercent);
       if (_progressPercent !== 1)
         requestIdRef.current = requestAnimationFrame(playAnimation);
       else onComplete?.();
@@ -127,6 +130,19 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
         : null;
     cancelRequestAnimationFrame();
     startAnimation();
+  };
+
+  const handleChangeProgress = (e, value) => {
+    if (!svgRef.current) return;
+    cancelRequestAnimationFrame();
+    setSliderValue(value);
+    setStatus(STATUS.paused);
+    progressPercentRef.current = value;
+    const svg = svgRef.current;
+    const path = svg.querySelector("path");
+    const lines = svg.querySelectorAll("line");
+    directionRef.current = "forward";
+    draw(path, lines, directionRef.current, value);
   };
 
   const cancelRequestAnimationFrame = () => {
@@ -173,25 +189,42 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
           ))}
         </g>
       </svg>
-      <ButtonGroup
-        className="absolute bottom-4 justify-self-center"
-        variant="contained"
-        aria-label="Playback buttons"
-      >
-        <Button onClick={handleReset} disabled={status === STATUS.idle}>
-          <ReplayIcon />
-        </Button>
-        {(status === STATUS.idle || status === STATUS.paused) && (
-          <Button onClick={handleStart}>
-            <PlayArrowIcon />
+      <div className="absolute bottom-0 inset-x-0 p-10 text-center flex flex-col items-center">
+        <Paper
+          className="flex flex-col px-6  !rounded-full absolute backdrop-blur-sm !bg-transparent [div:hover>&]:opacity-100 [div:hover>&]:bottom-[calc(100%-30px)] -bottom-12 opacity-0  !transition-all"
+          elevation={4}
+        >
+          <Slider
+            ref={progressSliderRef}
+            aria-label="progress"
+            step={0.000001}
+            min={0}
+            max={1}
+            value={sliderValue}
+            onChange={handleChangeProgress}
+            sx={{ width: 300 }}
+          />
+        </Paper>
+        <ButtonGroup
+          className="mx-auto"
+          variant="contained"
+          aria-label="Playback buttons"
+        >
+          <Button onClick={handleReset} disabled={status === STATUS.idle}>
+            <ReplayIcon />
           </Button>
-        )}
-        {status === STATUS.playing && (
-          <Button onClick={handlePause}>
-            <PauseIcon />
-          </Button>
-        )}
-      </ButtonGroup>
+          {(status === STATUS.idle || status === STATUS.paused) && (
+            <Button onClick={handleStart}>
+              <PlayArrowIcon />
+            </Button>
+          )}
+          {status === STATUS.playing && (
+            <Button onClick={handlePause}>
+              <PauseIcon />
+            </Button>
+          )}
+        </ButtonGroup>
+      </div>
     </div>
   );
 };
