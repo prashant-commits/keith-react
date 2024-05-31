@@ -1,14 +1,16 @@
+import { Settings } from "@mui/icons-material";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { Button, ButtonGroup, Paper, Slider } from "@mui/material";
+import FiltersModal from "components/FiltersModal";
 import Loader from "components/Loader";
 import usePendulum from "hooks/usePendulum";
 import { STAR_RATIOS } from "presets";
 import { useLayoutEffect, useRef, useState } from "react";
 
 const LENGTH_RATIOS = STAR_RATIOS.lengthRatios.map((ratio) => ratio * 100);
-const OMEGA_RATIOS = STAR_RATIOS.omegaRatios.map((ratio) => ratio * 1);
+const OMEGA_RATIOS = STAR_RATIOS.omegaRatios.map((ratio) => ratio * 0.5);
 // const LENGTH_RATIOS = [2, 5].map((ratio) => ratio * 100);
 // const OMEGA_RATIOS = [4, -2].map((ratio) => ratio * 1);
 const DURATION = 10 * 1000;
@@ -25,7 +27,11 @@ export const STATUS = {
   paused: "paused",
   finished: "finished",
 };
-const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
+const PendulumSvgAnimator = () => {
+  const [lengthRatios, setLengthRatios] = useState(null);
+  const [omegaRatios, setOmegaRatios] = useState(null);
+  const [duration, setDuration] = useState(null);
+  const [openSettings, setOpenSettings] = useState(false);
   const svgRef = useRef(null);
   const progressSliderRef = useRef(null);
   const directionRef = useRef("forward");
@@ -151,6 +157,10 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
     }
   };
 
+  const handleOpenSettings = () => {
+    setOpenSettings(true);
+  };
+
   if (isLoading)
     return (
       <div className="fixed grid place-items-center inset-0 bg-gray-900/40">
@@ -159,73 +169,79 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
     );
 
   return (
-    <div className="relative grid h-screen items-center">
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${origin.x * 2} ${origin.y * 2}`}
-        className="absolute inset-0 col-span-full row-span-full main-svg place-self-stretch"
-      >
-        <path
-          d={svgPath}
-          fill="none"
-          className="text-blue-500"
-          style={{
-            "--pathLength": lastPoint?.pathLength ?? 0,
-          }}
-        />
-        <circle cx={origin.x} cy={origin.y} r="2" className="fill-blue-500" />
-        <g>
-          {points[0]?.pendulums.map(({ x1, y1, x2, y2 }, index) => (
-            <line
-              strokeWidth={8}
-              strokeLinecap="round"
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              key={index}
-              className="stroke-current text-blue-500/50"
-            ></line>
-          ))}
-        </g>
-      </svg>
-      <div className="absolute bottom-0 inset-x-0 p-10 text-center flex flex-col items-center">
-        <Paper
-          className="flex flex-col px-6  !rounded-full absolute backdrop-blur-sm !bg-transparent [div:hover>&]:opacity-100 [div:hover>&]:bottom-[calc(100%-30px)] -bottom-12 opacity-0  !transition-all"
-          elevation={4}
+    <>
+      <div className="relative grid h-screen items-center">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${origin.x * 2} ${origin.y * 2}`}
+          className="absolute inset-0 col-span-full row-span-full main-svg place-self-stretch"
         >
-          <Slider
-            ref={progressSliderRef}
-            aria-label="progress"
-            step={0.000001}
-            min={0}
-            max={1}
-            value={sliderValue}
-            onChange={handleChangeProgress}
-            sx={{ width: 300 }}
+          <path
+            d={svgPath}
+            fill="none"
+            className="text-blue-500"
+            style={{
+              "--pathLength": lastPoint?.pathLength ?? 0,
+            }}
           />
-        </Paper>
-        <ButtonGroup
-          className="mx-auto"
-          variant="contained"
-          aria-label="Playback buttons"
-        >
-          <Button onClick={handleReset} disabled={status === STATUS.idle}>
-            <ReplayIcon />
-          </Button>
-          {(status === STATUS.idle || status === STATUS.paused) && (
-            <Button onClick={handleStart}>
-              <PlayArrowIcon />
+          <circle cx={origin.x} cy={origin.y} r="2" className="fill-blue-500" />
+          <g>
+            {points[0]?.pendulums.map(({ x1, y1, x2, y2 }, index) => (
+              <line
+                strokeWidth={8}
+                strokeLinecap="round"
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                key={index}
+                className="stroke-current text-blue-500/50"
+              ></line>
+            ))}
+          </g>
+        </svg>
+        <div className="absolute bottom-0 inset-x-0 p-10 text-center flex flex-col items-center">
+          <Paper
+            className="flex flex-col px-6  !rounded-full absolute backdrop-blur-sm !bg-transparent [div:hover>&]:opacity-100 [div:hover>&]:bottom-[calc(100%-30px)] -bottom-12 opacity-0  !transition-all"
+            elevation={4}
+          >
+            <Slider
+              ref={progressSliderRef}
+              aria-label="progress"
+              step={0.000001}
+              min={0}
+              max={1}
+              value={sliderValue}
+              onChange={handleChangeProgress}
+              sx={{ width: 300 }}
+            />
+          </Paper>
+          <ButtonGroup
+            className="mx-auto"
+            variant="contained"
+            aria-label="Playback buttons"
+          >
+            <Button onClick={handleReset} disabled={status === STATUS.idle}>
+              <ReplayIcon />
             </Button>
-          )}
-          {status === STATUS.playing && (
-            <Button onClick={handlePause}>
-              <PauseIcon />
+            {(status === STATUS.idle || status === STATUS.paused) && (
+              <Button onClick={handleStart}>
+                <PlayArrowIcon />
+              </Button>
+            )}
+            {status === STATUS.playing && (
+              <Button onClick={handlePause}>
+                <PauseIcon />
+              </Button>
+            )}
+            <Button onClick={handleOpenSettings}>
+              <Settings />
             </Button>
-          )}
-        </ButtonGroup>
+          </ButtonGroup>
+        </div>
       </div>
-    </div>
+      <FiltersModal open={openSettings} setOpen={setOpenSettings} />
+    </>
   );
 };
 
