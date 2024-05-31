@@ -143,9 +143,10 @@ const PendulumSvgAnimator = ({ lengthRatios, omegaRatios }) => {
     );
 
   return (
-    <div className="relative grid h-screen w-screen items-center">
+    <div className="relative grid h-screen items-center">
       <svg
         ref={svgRef}
+        viewBox={`0 0 ${origin.x * 2} ${origin.y * 2}`}
         className="absolute inset-0 col-span-full row-span-full main-svg place-self-stretch"
       >
         <path
