@@ -65,8 +65,8 @@ self.onmessage = function (e) {
       time++;
     } while (
       points.length < 1000 ||
-      Math.floor(firstPoint.x) !== Math.floor(lastPoint.x) ||
-      Math.floor(firstPoint.y) !== Math.floor(lastPoint.y)
+      Math.floor(firstPoint.x * 10) !== Math.floor(lastPoint.x * 10) ||
+      Math.floor(firstPoint.y * 10) !== Math.floor(lastPoint.y * 10)
     );
     firstPoint = points[0];
     lastPoint = points.at(-1);

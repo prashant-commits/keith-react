@@ -2,7 +2,7 @@ import { Settings } from "@mui/icons-material";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { Button, ButtonGroup, Paper, Slider } from "@mui/material";
+import { Button, ButtonGroup, Paper, Slider, Fab } from "@mui/material";
 import FiltersModal from "components/FiltersModal";
 import Loader from "components/Loader";
 import usePendulum from "hooks/usePendulum";
@@ -10,9 +10,9 @@ import { STAR_RATIOS } from "presets";
 import { useLayoutEffect, useRef, useState } from "react";
 
 const LENGTH_RATIOS = STAR_RATIOS.lengthRatios.map((ratio) => ratio * 100);
-const OMEGA_RATIOS = STAR_RATIOS.omegaRatios.map((ratio) => ratio * 0.5);
-// const LENGTH_RATIOS = [2, 5].map((ratio) => ratio * 100);
-// const OMEGA_RATIOS = [4, -2].map((ratio) => ratio * 1);
+const OMEGA_RATIOS = STAR_RATIOS.omegaRatios.map((ratio) => ratio * 0.4);
+// const LENGTH_RATIOS = [1, 0.2].map((ratio) => ratio * 100);
+// const OMEGA_RATIOS = [4, 200].map((ratio) => ratio * 1);
 const DURATION = 10 * 1000;
 
 function inOutQuad(n) {
@@ -99,7 +99,7 @@ const PendulumSvgAnimator = () => {
         Math.min((time - startTimeRef.current) / durationRef.current, 1)
       );
       progressPercentRef.current = _progressPercent;
-      setSliderValue(Number(_progressPercent).toFixed(5));
+      // setSliderValue(Number(_progressPercent).toFixed(5));
       draw(path, lines, directionRef.current, _progressPercent);
       if (_progressPercent !== 1)
         requestIdRef.current = requestAnimationFrame(playAnimation);
@@ -200,9 +200,9 @@ const PendulumSvgAnimator = () => {
             ))}
           </g>
         </svg>
-        <div className="absolute bottom-0 inset-x-0 p-10 text-center flex flex-col items-center">
+        <div className="fixed bottom-0 inset-x-0 p-10 text-center flex flex-col items-center">
           <Paper
-            className="flex flex-col px-6  !rounded-full absolute backdrop-blur-sm !bg-transparent [div:hover>&]:opacity-100 [div:hover>&]:bottom-[calc(100%-30px)] -bottom-12 opacity-0  !transition-all"
+            className="flex flex-col px-4  !rounded-full absolute backdrop-blur-sm !bg-transparent [div:hover>&]:opacity-100 [div:hover>&]:bottom-[calc(100%-30px)] -bottom-12 opacity-0  !transition-all"
             elevation={4}
           >
             <Slider
@@ -234,13 +234,23 @@ const PendulumSvgAnimator = () => {
                 <PauseIcon />
               </Button>
             )}
-            <Button onClick={handleOpenSettings}>
-              <Settings />
-            </Button>
           </ButtonGroup>
         </div>
       </div>
       <FiltersModal open={openSettings} setOpen={setOpenSettings} />
+
+      <Fab
+        sx={{
+          position: "fixed",
+          top: 16,
+          right: 16,
+        }}
+        aria-label="settings"
+        color="primary"
+        onClick={handleOpenSettings}
+      >
+        <Settings />
+      </Fab>
     </>
   );
 };
