@@ -32,6 +32,7 @@ const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
     handleChange,
     handleBlur,
     handleSubmit,
+    setFieldTouched,
     setFieldValue,
     resetForm,
   } = useFormik({
@@ -82,7 +83,9 @@ const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
   };
   const handleSelectPreset = ({ lengthRatios, omegaRatios }) => {
     setFieldValue("lengthRatios", lengthRatios.join(":"));
+    setFieldTouched("lengthRatios", true);
     setFieldValue("omegaRatios", omegaRatios.join(":"));
+    setFieldTouched("omegaRatios", true);
     setAnchorEl(null);
   };
 
