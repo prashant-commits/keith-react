@@ -60,12 +60,13 @@ const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
 
   useEffect(() => {
     if (!values.autoLength) return;
-    const autoLengthConstant =
-      Math.floor(Math.min(origin.x, origin.y) - PADDING) /
-      values.lengthRatios
-        .split(":")
-        .map(parseFloat)
-        .reduce((a, b) => a + b, 0);
+    const autoLengthConstant = Math.floor(
+      (Math.min(origin.x, origin.y) - PADDING) /
+        values.lengthRatios
+          .split(":")
+          .map(parseFloat)
+          .reduce((a, b) => a + b, 0)
+    );
     autoLengthConstant && setFieldValue("lengthConstant", autoLengthConstant);
   }, [
     origin.x,
