@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 
-const usePendulum = (lengthRatios, omegaRatios, origin) => {
+const usePendulum = ({
+  lengthRatios,
+  omegaRatios,
+  lengthConstant,
+  omegaConstant,
+  origin,
+}) => {
   const [points, setPoints] = useState([]);
   const [svgPath, setSvgPath] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -25,11 +31,13 @@ const usePendulum = (lengthRatios, omegaRatios, origin) => {
     worker.postMessage({
       lengthRatios,
       omegaRatios,
+      lengthConstant,
+      omegaConstant,
       originTransform: origin,
     });
 
     return () => worker.terminate();
-  }, [lengthRatios, omegaRatios, origin]);
+  }, [lengthConstant, lengthRatios, omegaConstant, omegaRatios, origin]);
 
   return { points, svgPath, isLoading };
 };

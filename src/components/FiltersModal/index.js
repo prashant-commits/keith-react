@@ -15,157 +15,245 @@ import {
   Typography,
 } from "@mui/material";
 import PresetsMenu from "components/PresetsMenu";
-import { useState } from "react";
+import { useFormik } from "formik";
+import { useEffect, useState } from "react";
+import { FiltersSchema } from "./schema";
 
-const FiltersModal = ({
-  open,
-  setOpen,
-  lengthRatios,
-  omegaRatios,
-  duration,
-  setLengthRatios,
-  setOmegaRatios,
-  setDuration,
-}) => {
+const PADDING = 200;
+
+const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const {
+    values,
+    errors,
+    touched,
+    dirty,
+    isValid,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    setFieldValue,
+    resetForm,
+  } = useFormik({
+    initialValues: {
+      lengthRatios: config.lengthRatios?.join(":") ?? "",
+      omegaRatios: config.omegaRatios?.join(":") ?? "",
+      duration: config.duration / 1000 ?? 0,
+      lengthConstant: config.lengthConstant ?? 100,
+      omegaConstant: config.omegaConstant ?? 4,
+      autoLength: false,
+    },
+    validationSchema: FiltersSchema,
+    onSubmit: (values) => {
+      console.log(values);
+      setConfig({
+        lengthRatios: values.lengthRatios.split(":").map(parseFloat),
+        omegaRatios: values.omegaRatios.split(":").map(parseFloat),
+        duration: values.duration * 1000,
+        lengthConstant: values.lengthConstant,
+        omegaConstant: values.omegaConstant,
+      });
+      setOpen(false);
+    },
+  });
+
+  useEffect(() => {
+    if (!values.autoLength) return;
+    const autoLengthConstant =
+      (Math.min(origin.x, origin.y) - PADDING) /
+      values.lengthRatios
+        .split(":")
+        .map(parseFloat)
+        .reduce((a, b) => a + b, 0);
+    autoLengthConstant && setFieldValue("lengthConstant", autoLengthConstant);
+  }, [
+    origin.x,
+    origin.y,
+    values.autoLength,
+    values.lengthRatios,
+    setFieldValue,
+  ]);
+
   const handleClickPreset = (event) => {
     setAnchorEl(event.currentTarget);
   };
-
   const handleClose = () => {
     setOpen(false);
   };
+  const handleSelectPreset = ({ lengthRatios, omegaRatios }) => {
+    setFieldValue("lengthRatios", lengthRatios.join(":"));
+    setFieldValue("omegaRatios", omegaRatios.join(":"));
+    setAnchorEl(null);
+  };
+
   return (
     <>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        fullWidth={true}
-        maxWidth="sm"
-        PaperProps={{
-          component: "form",
-          onSubmit: (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const formJson = Object.fromEntries(formData.entries());
-            const email = formJson.email;
-            console.log(email);
-            handleClose();
-          },
-        }}
-      >
-        <DialogTitle>Settings</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={handleClose}
-          sx={{
-            position: "absolute",
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-        <DialogContent>
-          <DialogContentText>
-            Change the settings of the animation or load a preset.
-          </DialogContentText>
+      <Dialog open={open} onClose={handleClose} fullWidth={true} maxWidth="sm">
+        <form onSubmit={handleSubmit}>
+          <DialogTitle>Settings</DialogTitle>
+          <IconButton
+            aria-label="close"
+            type="button"
+            onClick={handleClose}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <DialogContent>
+            <DialogContentText>
+              Change the settings of the animation or load a preset.
+            </DialogContentText>
 
-          <div className="mb-4 mt-6">
-            <Typography
-              variant="h6"
-              component="h6"
-              className="text-blue-600 !text-base !mb-3"
-            >
-              Length ratios
-            </Typography>
-            <FormControl fullWidth className="!mb-2">
-              <TextField
-                size="small"
-                id="lengthRatios"
-                label="Lengths"
-                placeholder="1:2:3"
-              />
-            </FormControl>
-            <div className="flex items-center">
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="Auto"
-              />
+            <div className="mb-4 mt-6">
+              <Typography
+                variant="h6"
+                component="h6"
+                className="text-blue-600 !text-base !mb-3"
+              >
+                Length ratios
+              </Typography>
+              <FormControl fullWidth className="!mb-2">
+                <TextField
+                  size="small"
+                  id="lengthRatios"
+                  label="Lengths"
+                  placeholder="1:2:3"
+                  type="text"
+                  name="lengthRatios"
+                  value={values.lengthRatios}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.lengthRatios && Boolean(errors.lengthRatios)}
+                  helperText={touched.lengthRatios && errors.lengthRatios}
+                />
+              </FormControl>
+              <div className="flex items-center">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="autoLength"
+                      checked={values.autoLength}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                  }
+                  label="Auto"
+                />
+                <FormControl>
+                  <TextField
+                    size="small"
+                    type="number"
+                    id="lengthConstant"
+                    label="Length constant"
+                    placeholder="100"
+                    inputProps={{ step: 0.1 }}
+                    name="lengthConstant"
+                    disabled={values.autoLength}
+                    value={values.lengthConstant}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                </FormControl>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <Typography
+                variant="h6"
+                component="h6"
+                className="text-blue-600 !text-base !mb-3"
+              >
+                Omega ratios
+              </Typography>
+              <FormControl fullWidth className="!mb-2">
+                <TextField
+                  id="omegaRatios"
+                  label="Omegas"
+                  placeholder="1:2:3"
+                  type="text"
+                  size="small"
+                  name="omegaRatios"
+                  value={values.omegaRatios}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                />
+              </FormControl>
               <FormControl>
                 <TextField
                   size="small"
                   type="number"
-                  id="lengthConstant"
-                  label="Length constant"
-                  placeholder="100px"
+                  id="omegaConstant"
+                  label="Omega constant"
+                  placeholder="100"
+                  inputProps={{ step: 0.1 }}
+                  name="omegaConstant"
+                  value={values.omegaConstant}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  helperText="Lower value calculates more points on the path, may affect performance."
                 />
               </FormControl>
             </div>
-          </div>
-
-          <div className="mb-4">
-            <Typography
-              variant="h6"
-              component="h6"
-              className="text-blue-600 !text-base !mb-3"
+            <div className="mb-4">
+              <Typography
+                variant="h6"
+                component="h6"
+                className="text-blue-600 !text-base !mb-3"
+              >
+                Duration
+              </Typography>
+              <FormControl fullWidth>
+                <TextField
+                  size="small"
+                  type="number"
+                  id="duration"
+                  label="Duration"
+                  placeholder="10s"
+                  name="duration"
+                  value={values.duration}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                />
+                <FormHelperText>Duration in second(s)</FormHelperText>
+              </FormControl>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="text" onClick={handleClickPreset}>
+                Load a preset
+              </Button>
+            </div>
+          </DialogContent>
+          <DialogActions>
+            {dirty && (
+              <Button
+                type="reset"
+                variant="text"
+                className=""
+                onClick={resetForm}
+              >
+                Reset to previous settings
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              type="submit"
+              disabled={!dirty || !isValid}
             >
-              Omega ratios
-            </Typography>
-            <FormControl fullWidth className="!mb-2">
-              <TextField
-                id="omegaRatios"
-                label="Omegas"
-                placeholder="1:2:3"
-                size="small"
-              />
-            </FormControl>
-            <FormControl>
-              <TextField
-                size="small"
-                type="number"
-                id="omegaConstant"
-                label="Omega constant"
-                placeholder="100px"
-              />
-            </FormControl>
-          </div>
-          <div className="mb-4">
-            <Typography
-              variant="h6"
-              component="h6"
-              className="text-blue-600 !text-base !mb-3"
-            >
-              Duration
-            </Typography>
-            <FormControl fullWidth>
-              <TextField
-                size="small"
-                type="number"
-                id="duration"
-                label="Duration"
-                placeholder="10s"
-              />
-              <FormHelperText>Duration in second(s)</FormHelperText>
-            </FormControl>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="text" onClick={handleClickPreset}>
-              Load a preset
+              Apply
             </Button>
-          </div>
-        </DialogContent>
-        <DialogActions>
-          <Button variant="text" className="">
-            Reset to previous settings
-          </Button>
-          <Button variant="contained" type="submit">
-            Apply
-          </Button>
-        </DialogActions>
+          </DialogActions>
+        </form>
       </Dialog>
-      <PresetsMenu anchorEl={anchorEl} setAnchorEl={setAnchorEl} />
+      <PresetsMenu
+        anchorEl={anchorEl}
+        setAnchorEl={setAnchorEl}
+        onSelectPreset={handleSelectPreset}
+      />
     </>
   );
 };

@@ -13,22 +13,31 @@ const getWorkerResponse = (status = STATUS.pending, data, svgPath) => {
 };
 
 self.onmessage = function (e) {
-  const { lengthRatios, omegaRatios, originTransform } = e.data;
+  const {
+    lengthRatios,
+    omegaRatios,
+    lengthConstant,
+    omegaConstant,
+    originTransform,
+  } = e.data;
+
+  const lengths = lengthRatios.map((length) => length * lengthConstant);
+  const omegas = omegaRatios.map((omega) => omega * omegaConstant);
   const points = [];
   let svgPath = "";
   let pathLength = 0;
   let firstPoint = null;
   let lastPoint = null;
   if (
-    Array.isArray(lengthRatios) &&
-    Array.isArray(omegaRatios) &&
-    lengthRatios.length === omegaRatios.length &&
-    lengthRatios.length > 0
+    Array.isArray(lengths) &&
+    Array.isArray(omegas) &&
+    lengths.length === omegas.length &&
+    lengths.length > 0
   ) {
     do {
       const cords = getPendulumLastPointPosition(
-        lengthRatios,
-        omegaRatios,
+        lengths,
+        omegas,
         originTransform,
         time * speedOffset
       );
@@ -65,8 +74,8 @@ self.onmessage = function (e) {
       time++;
     } while (
       points.length < 1000 ||
-      Math.floor(firstPoint.x * 10) !== Math.floor(lastPoint.x * 10) ||
-      Math.floor(firstPoint.y * 10) !== Math.floor(lastPoint.y * 10)
+      Math.floor(firstPoint.x * 1) !== Math.floor(lastPoint.x * 1) ||
+      Math.floor(firstPoint.y * 1) !== Math.floor(lastPoint.y * 1)
     );
     firstPoint = points[0];
     lastPoint = points.at(-1);
@@ -82,23 +91,23 @@ self.onmessage = function (e) {
 };
 
 const getPendulumLastPointPosition = (
-  lengthRatios,
-  omegaRatios,
+  lengths,
+  omegas,
   origin = { x: 0, y: 0 },
   t = 0
 ) => {
   let x = origin.x;
   let y = origin.y;
   const pendulums = [];
-  for (let i = 0; i < lengthRatios.length; i++) {
+  for (let i = 0; i < lengths.length; i++) {
     const pendulum = {
       x1: x,
       y1: y,
       x2: 0,
       y2: 0,
     };
-    const length = lengthRatios[i];
-    const omega = omegaRatios[i];
+    const length = lengths[i];
+    const omega = omegas[i];
     const theta = omega * t;
     x += length * Math.sin(theta);
     y -= length * Math.cos(theta);

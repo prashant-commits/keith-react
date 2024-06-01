@@ -2,18 +2,18 @@ import { Settings } from "@mui/icons-material";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { Button, ButtonGroup, Paper, Slider, Fab } from "@mui/material";
+import { Button, ButtonGroup, Fab, Paper, Slider } from "@mui/material";
 import FiltersModal from "components/FiltersModal";
 import Loader from "components/Loader";
+import useConfig from "hooks/useConfig";
 import usePendulum from "hooks/usePendulum";
-import { STAR_RATIOS } from "presets";
-import { useLayoutEffect, useRef, useState } from "react";
-
-const LENGTH_RATIOS = STAR_RATIOS.lengthRatios.map((ratio) => ratio * 100);
-const OMEGA_RATIOS = STAR_RATIOS.omegaRatios.map((ratio) => ratio * 0.4);
-// const LENGTH_RATIOS = [1, 0.2].map((ratio) => ratio * 100);
-// const OMEGA_RATIOS = [4, 200].map((ratio) => ratio * 1);
-const DURATION = 10 * 1000;
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 function inOutQuad(n) {
   n *= 2;
@@ -28,26 +28,38 @@ export const STATUS = {
   finished: "finished",
 };
 const PendulumSvgAnimator = () => {
-  const [lengthRatios, setLengthRatios] = useState(null);
-  const [omegaRatios, setOmegaRatios] = useState(null);
-  const [duration, setDuration] = useState(null);
+  const [config, setConfig] = useConfig();
   const [openSettings, setOpenSettings] = useState(false);
-  const svgRef = useRef(null);
-  const progressSliderRef = useRef(null);
-  const directionRef = useRef("forward");
-  const durationRef = useRef(DURATION);
-  const startTimeRef = useRef(null);
-  const progressPercentRef = useRef(0);
-  const requestIdRef = useRef(null);
   const [sliderValue, setSliderValue] = useState(0);
   const [status, setStatus] = useState(STATUS.idle);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
-  const { points, svgPath, isLoading } = usePendulum(
-    LENGTH_RATIOS,
-    OMEGA_RATIOS,
-    origin
-  );
+  const { points, svgPath, isLoading } = usePendulum({
+    lengthRatios: config.lengthRatios,
+    omegaRatios: config.omegaRatios,
+    lengthConstant: config.lengthConstant,
+    omegaConstant: config.omegaConstant,
+    origin,
+  });
+
+  const svgRef = useRef(null);
+  const progressSliderRef = useRef(null);
+  const directionRef = useRef("forward");
+  const durationRef = useRef(config.duration);
+  const startTimeRef = useRef(null);
+  const progressPercentRef = useRef(0);
+  const requestIdRef = useRef(null);
+
   const lastPoint = points.at(-1);
+
+  const resetAnimation = useCallback(() => {
+    cancelRequestAnimationFrame();
+    directionRef.current = "forward";
+    startTimeRef.current = null;
+    progressPercentRef.current = 0;
+    durationRef.current = config.duration;
+    setStatus(STATUS.idle);
+    setSliderValue(0);
+  }, [config]);
 
   useLayoutEffect(() => {
     if (!svgRef.current) return;
@@ -57,6 +69,10 @@ const PendulumSvgAnimator = () => {
       y: rect.height / 2,
     });
   }, []);
+
+  useEffect(() => {
+    resetAnimation();
+  }, [config, resetAnimation]);
 
   const draw = (path, lines, dir, progressPercent) => {
     const effectiveProgressPercent =
@@ -84,8 +100,12 @@ const PendulumSvgAnimator = () => {
   ) => {
     if (points.length === 0) return;
     if (!svgRef.current) return;
-    console.log(points.length);
-    console.log({ first: points[0], last: points[points.length - 1] });
+    console.log();
+    console.log({
+      first: points[0],
+      last: points[points.length - 1],
+      length: points.length,
+    });
     const svg = svgRef.current;
     const path = svg.querySelector("path");
     const lines = svg.querySelectorAll("line");
@@ -127,7 +147,7 @@ const PendulumSvgAnimator = () => {
   };
 
   const handleStart = () => {
-    const duration = DURATION;
+    const duration = config.duration;
     durationRef.current = duration;
     directionRef.current = "forward";
     startTimeRef.current =
@@ -154,6 +174,7 @@ const PendulumSvgAnimator = () => {
   const cancelRequestAnimationFrame = () => {
     if (requestIdRef.current) {
       cancelAnimationFrame(requestIdRef.current);
+      requestIdRef.current = null;
     }
   };
 
@@ -179,6 +200,8 @@ const PendulumSvgAnimator = () => {
           <path
             d={svgPath}
             fill="none"
+            strokeLinejoin="round"
+            strokeLinecap="round"
             className="text-blue-500"
             style={{
               "--pathLength": lastPoint?.pathLength ?? 0,
@@ -237,7 +260,13 @@ const PendulumSvgAnimator = () => {
           </ButtonGroup>
         </div>
       </div>
-      <FiltersModal open={openSettings} setOpen={setOpenSettings} />
+      <FiltersModal
+        origin={origin}
+        open={openSettings}
+        setOpen={setOpenSettings}
+        config={config}
+        setConfig={setConfig}
+      />
 
       <Fab
         sx={{
