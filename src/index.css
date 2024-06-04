@@ -22,8 +22,6 @@ code {
 }
 
 .main-svg path {
-  stroke: currentColor;
-  stroke-width: 2;
   stroke-dasharray: var(--pathLength) var(--pathLength);
   stroke-dashoffset: var(--pathLength);
 }

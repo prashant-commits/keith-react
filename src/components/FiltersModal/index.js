@@ -12,6 +12,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import PresetsMenu from "components/PresetsMenu";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
@@ -20,6 +21,7 @@ import { FiltersSchema } from "./schema";
 const PADDING = 200;
 
 const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
+  const theme = useTheme()
   const [anchorEl, setAnchorEl] = useState(null);
   const {
     values,
@@ -115,7 +117,8 @@ const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
               <Typography
                 variant="h6"
                 component="h6"
-                className="text-blue-600 !text-base !mb-3"
+                color={theme.palette.text.primary}
+                className="!text-base !mb-3"
               >
                 Length ratios
               </Typography>
@@ -168,7 +171,8 @@ const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
               <Typography
                 variant="h6"
                 component="h6"
-                className="text-blue-600 !text-base !mb-3"
+                color={theme.palette.text.primary}
+                className="!text-base !mb-3"
               >
                 Omega ratios
               </Typography>
@@ -205,7 +209,8 @@ const FiltersModal = ({ origin, open, config, setOpen, setConfig }) => {
               <Typography
                 variant="h6"
                 component="h6"
-                className="text-blue-600 !text-base !mb-3"
+                className="!text-base !mb-3"
+                color={theme.palette.text.primary}
               >
                 Duration
               </Typography>

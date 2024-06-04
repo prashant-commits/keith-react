@@ -1,8 +1,11 @@
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import presets from "./presets";
 
 const PresetsMenu = ({ anchorEl, setAnchorEl, onSelectPreset }) => {
+  const theme = useTheme();
   const open = Boolean(anchorEl);
 
   const handleClose = () => {
@@ -27,11 +30,15 @@ const PresetsMenu = ({ anchorEl, setAnchorEl, onSelectPreset }) => {
           className="flex-col !items-stretch"
         >
           {preset.label}
-          <p className="text-sm font-medium text-gray-500 text-start">
+          <Typography
+            variant="caption"
+            component="p"
+            color={theme.palette.text.secondary}
+            className="text-sm font-medium text-start"
+          >
             L({preset.value.lengthRatios.join(" : ")})&nbsp; O(
             {preset.value.omegaRatios.join(" : ")})
-          </p>
-          <p className="text-sm font-medium text-gray-500 text-start"></p>
+          </Typography>
         </MenuItem>
       ))}
     </Menu>
