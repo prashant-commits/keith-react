@@ -79,7 +79,7 @@ self.onmessage = function (e) {
       points.push(point);
       time++;
     } while (
-      points.length < 100000 ||
+      points.length < 1000 ||
       Math.floor(firstPoint.x * 1) !== Math.floor(lastPoint.x * 1) ||
       Math.floor(firstPoint.y * 1) !== Math.floor(lastPoint.y * 1)
     );
