@@ -1,10 +1,14 @@
-import { Settings } from "@mui/icons-material";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { Button, ButtonGroup, Fab, Paper, Slider } from "@mui/material";
+import SettingsIcon from "@mui/icons-material/Settings";
+import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import CircularProgress from "@mui/material/CircularProgress";
+import Fab from "@mui/material/Fab";
+import Paper from "@mui/material/Paper";
+import Slider from "@mui/material/Slider";
 import FiltersModal from "components/FiltersModal";
-import Loader from "components/Loader";
 import useConfig from "hooks/useConfig";
 import usePendulum from "hooks/usePendulum";
 import {
@@ -185,7 +189,7 @@ const PendulumSvgAnimator = () => {
   if (isLoading)
     return (
       <div className="fixed grid place-items-center inset-0 bg-gray-900/40">
-        <Loader className="!size-12" />
+        <CircularProgress disableShrink size={48} />
       </div>
     );
 
@@ -278,7 +282,7 @@ const PendulumSvgAnimator = () => {
         color="primary"
         onClick={handleOpenSettings}
       >
-        <Settings />
+        <SettingsIcon />
       </Fab>
     </>
   );
