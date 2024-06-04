@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-globals */
 const speedOffset = 0.0001;
 let time = 0;
+const MAX_POINTS = 1000000;
 
 const STATUS = {
   success: "success",
@@ -35,6 +36,11 @@ self.onmessage = function (e) {
     lengths.length > 0
   ) {
     do {
+      if (MAX_POINTS <= points.length) {
+        return self.postMessage(
+          getWorkerResponse(STATUS.error, points, svgPath)
+        );
+      }
       const cords = getPendulumLastPointPosition(
         lengths,
         omegas,
@@ -73,7 +79,7 @@ self.onmessage = function (e) {
       points.push(point);
       time++;
     } while (
-      points.length < 1000 ||
+      points.length < 100000 ||
       Math.floor(firstPoint.x * 1) !== Math.floor(lastPoint.x * 1) ||
       Math.floor(firstPoint.y * 1) !== Math.floor(lastPoint.y * 1)
     );

@@ -10,6 +10,7 @@ const usePendulum = ({
   const [points, setPoints] = useState([]);
   const [svgPath, setSvgPath] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     if (lengthRatios.length === 0 || omegaRatios.length === 0) return;
@@ -19,12 +20,12 @@ const usePendulum = ({
     );
     worker.onmessage = (e) => {
       const { status, data, svgPath } = e.data;
-      if (status === "success") {
-        setPoints(data);
-        setSvgPath(svgPath);
-      } else {
-        console.error(data);
-      }
+
+      status === "error" && console.error(data);
+      setIsError(status === "error");
+
+      Array.isArray(data) && setPoints(data);
+      svgPath && setSvgPath(svgPath);
       setIsLoading(false);
     };
 
@@ -39,7 +40,7 @@ const usePendulum = ({
     return () => worker.terminate();
   }, [lengthConstant, lengthRatios, omegaConstant, omegaRatios, origin]);
 
-  return { points, svgPath, isLoading };
+  return { points, svgPath, isLoading, isError };
 };
 
 export default usePendulum;

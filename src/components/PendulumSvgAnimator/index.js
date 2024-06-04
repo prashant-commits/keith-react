@@ -180,7 +180,7 @@ const PendulumSvgAnimator = ({ className, config, origin, setOrigin }) => {
 
   if (isLoading)
     return (
-      <div className="fixed grid place-items-center inset-0 bg-gray-900/40">
+      <div className="fixed grid place-items-center inset-0">
         <CircularProgress disableShrink size={48} />
       </div>
     );
