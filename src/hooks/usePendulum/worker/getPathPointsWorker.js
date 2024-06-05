@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-globals */
-const speedOffset = 0.0001;
+const timePrecision = 0.001;
 let time = 0;
+const getTotalTime = (omegaConstant) => (2 * Math.PI) / omegaConstant;
 const MAX_POINTS = 1000000;
 
 const STATUS = {
@@ -25,6 +26,8 @@ self.onmessage = function (e) {
   const lengths = lengthRatios.map((length) => length * lengthConstant);
   const omegas = omegaRatios.map((omega) => omega * omegaConstant);
   const points = [];
+  const totalTime = getTotalTime(omegaConstant);
+  let currTime = 0;
   let svgPath = "";
   let pathLength = 0;
   let firstPoint = null;
@@ -41,11 +44,12 @@ self.onmessage = function (e) {
           getWorkerResponse(STATUS.error, points, svgPath)
         );
       }
+      currTime = time * timePrecision;
       const cords = getPendulumLastPointPosition(
         lengths,
         omegas,
         originTransform,
-        time * speedOffset
+        currTime
       );
       const prevPoint = points.at(-1);
       let dt = 0,
@@ -78,11 +82,7 @@ self.onmessage = function (e) {
       }
       points.push(point);
       time++;
-    } while (
-      points.length < 1000 ||
-      Math.floor(firstPoint.x * 1) !== Math.floor(lastPoint.x * 1) ||
-      Math.floor(firstPoint.y * 1) !== Math.floor(lastPoint.y * 1)
-    );
+    } while (currTime <= totalTime);
     firstPoint = points[0];
     lastPoint = points.at(-1);
     firstPoint.speed = lastPoint.speed;
